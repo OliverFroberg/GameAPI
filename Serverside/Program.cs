@@ -9,7 +9,7 @@ using Serverside.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var url = "http://localhost:5212";
+var url = "http://0.0.0.0:5212";
 if (!string.IsNullOrEmpty(url))
 	builder.WebHost.UseUrls(url);
 
@@ -39,6 +39,9 @@ builder.Services.AddSingleton<DataService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthService>();
+
+builder.Services.AddSingleton<IPointsRepository, PointsRepository>();
+builder.Services.AddScoped<PointsService>();
 
 builder.Services.AddCors(options => {
 	options.AddDefaultPolicy(policy => {
@@ -84,5 +87,6 @@ app.UseAuthorization();
 
 app.MapUserEndpoints();
 app.MapAuthEndpoints();
+app.MapPointsEndpoints();
 
 app.Run();
