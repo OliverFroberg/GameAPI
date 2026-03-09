@@ -1,7 +1,8 @@
 ﻿namespace Serverside.Repositories;
 
 public interface IPointsRepository {
-	long GetTotal(string userId);
-	long AddPoints(string userId, int amount);
-	IReadOnlyList<(string UserId, long Total)> GetAllOrderedByTotalDesc();
+	Task<long> GetTotalAsync(string userId);
+	Task<long> PostPointAsync(string userId, int amount);
+	Task<long> PutTotalAsync(string userId, long total);
+	Task<IReadOnlyList<(string UserId, long Total)>> GetAllOrderedByTotalDescAsync();
 }

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 var url = "http://0.0.0.0:5212";
 if (!string.IsNullOrEmpty(url))
 	builder.WebHost.UseUrls(url);
+
+builder.Services.ConfigureHttpJsonOptions(options => {
+	options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => {
@@ -40,7 +45,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthService>();
 
-builder.Services.AddSingleton<IPointsRepository, PointsRepository>();
+builder.Services.AddScoped<IPointsRepository, PointsRepository>();
 builder.Services.AddScoped<PointsService>();
 
 builder.Services.AddCors(options => {
@@ -67,13 +72,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	});
 builder.Services.AddAuthorization(options => { options.AddPolicy("AdminOnly", p => p.RequireRole("Admin")); });
 
+var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "gameapi.db");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={dbPath}";
 builder.Services.AddDbContext<DbContextGameApi>(options =>
-	options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=gameapi.db"));
+	options.UseSqlite(connectionString));
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope()) {
-	scope.ServiceProvider.GetRequiredService<DbContextGameApi>().Database.EnsureCreated();
+	var db = scope.ServiceProvider.GetRequiredService<DbContextGameApi>();
+	db.Database.EnsureCreated();
+	// Opret Point tabellen hvis den ikke findes (ved opgradering fra in-memory)
+	db.Database.ExecuteSqlRaw(
+		"CREATE TABLE IF NOT EXISTS Point (UserId TEXT NOT NULL PRIMARY KEY, Total INTEGER NOT NULL DEFAULT 0)");
 }
 
 if (app.Environment.IsDevelopment()) {
