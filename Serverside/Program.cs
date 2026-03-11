@@ -48,6 +48,9 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IPointsRepository, PointsRepository>();
 builder.Services.AddScoped<PointsService>();
 
+builder.Services.AddScoped<IMazeRepository, MazeRepository>();
+builder.Services.AddScoped<MazeService>();
+
 builder.Services.AddCors(options => {
 	options.AddDefaultPolicy(policy => {
 		policy.AllowAnyOrigin()
@@ -85,6 +88,8 @@ using (var scope = app.Services.CreateScope()) {
 	// Opret Point tabellen hvis den ikke findes (ved opgradering fra in-memory)
 	db.Database.ExecuteSqlRaw(
 		"CREATE TABLE IF NOT EXISTS Point (UserId TEXT NOT NULL PRIMARY KEY, Total INTEGER NOT NULL DEFAULT 0)");
+	db.Database.ExecuteSqlRaw(
+		"CREATE TABLE IF NOT EXISTS MazeLevel (UserId TEXT NOT NULL PRIMARY KEY, Level INTEGER NOT NULL DEFAULT 0)");
 }
 
 if (app.Environment.IsDevelopment()) {
@@ -99,5 +104,6 @@ app.UseAuthorization();
 app.MapUserEndpoints();
 app.MapAuthEndpoints();
 app.MapPointsEndpoints();
+app.MapMazeEndpoints();
 
 app.Run();
